@@ -6,9 +6,18 @@ class JwiaFunction implements JwiaCallable {
   private final Stmt.Function declaration;
   private final Environment closure;
 
-  JwiaFunction(Stmt.Function declaration, Environment closure) {
+  private final boolean isInitializer;
+
+  JwiaFunction(Stmt.Function declaration, Environment closure, boolean isInitializer) {
+    this.isInitializer = isInitializer;
     this.closure = closure;
     this.declaration = declaration;
+  }
+
+  JwiaFunction bind(JwiaInstance instance) {
+    Environment environment = new Environment(closure);
+    environment.define("this", instance);
+    return new JwiaFunction(declaration, environment, isInitializer);
   }
 
   @Override
@@ -35,8 +44,10 @@ class JwiaFunction implements JwiaCallable {
     try {
       interpreter.executeBlock(declaration.body, environment);
     } catch (Return returnValue) {
+      if (isInitializer) return closure.getAt(0, "this");
       return returnValue.value;
     }
+    if (isInitializer) return closure.getAt(0, "this");
     return null;
   }
 }

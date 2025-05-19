@@ -56,6 +56,35 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   }
 
   @Override
+  public Object visitSetExpr(Expr.Set expr) {
+    Object object = evaluate(expr.object);
+
+    if (!(object instanceof JwiaInstance)) { 
+      throw new RuntimeError(expr.name, "Only instances have fields.");
+    }
+
+    Object value = evaluate(expr.value);
+    ((JwiaInstance)object).set(expr.name, value);
+    return value;
+  }
+
+  @Override
+  public Object visitThisExpr(Expr.This expr) {
+    return lookUpVariable(expr.keyword, expr);
+  }
+
+  @Override
+  public Object visitGetExpr(Expr.Get expr) {
+    Object object = evaluate(expr.object);
+    if (object instanceof JwiaInstance) {
+      return ((JwiaInstance) object).get(expr.name);
+    }
+
+    throw new RuntimeError(expr.name,
+        "Only instances have properties.");
+  }
+
+  @Override
   public Object visitUnaryExpr(Expr.Unary expr) {
     Object right = evaluate(expr.right);
 
@@ -180,8 +209,26 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
   @Override
   public Void visitFunctionStmt(Stmt.Function stmt) {
-    JwiaFunction function = new JwiaFunction(stmt, environment);
+    JwiaFunction function = new JwiaFunction(stmt, environment, false);
     environment.define(stmt.name.lexeme, function);
+    return null;
+  }
+
+  @Override
+  public Void visitClassStmt(Stmt.Class stmt) {
+
+
+    environment.define(stmt.name.lexeme, null);
+
+    Map<String, JwiaFunction> methods = new HashMap<>();
+    for (Stmt.Function method : stmt.methods) {
+      JwiaFunction function = new JwiaFunction(method, environment, method.name.lexeme.equals("init"));
+      methods.put(method.name.lexeme, function);
+    }
+
+    JwiaClass klass = new JwiaClass(stmt.name.lexeme, methods);
+    environment.assign(stmt.name, klass);
+
     return null;
   }
 
