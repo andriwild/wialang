@@ -2,6 +2,8 @@ package wialang;
 
 import java.util.List;
 
+import wialang.Expr.Super;
+
 class AstPrinter implements Expr.Visitor<String> {
     String print(Expr expr) {
         return expr.accept(this);
@@ -115,4 +117,10 @@ class AstPrinter implements Expr.Visitor<String> {
     public String visitThisExpr(Expr.This expr) {
         return "this";
     }
+
+    @Override
+    public String visitSuperExpr(Expr.Super expr) {
+        return parenthesize2("super", expr.method);
+    }
+
 }

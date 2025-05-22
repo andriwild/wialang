@@ -5,16 +5,22 @@ import java.util.Map;
 
 class JwiaClass implements JwiaCallable {
   final String name;
+  final JwiaClass superclass;
   private final Map<String, JwiaFunction> methods;
 
-  JwiaClass(String name, Map<String, JwiaFunction> methods) {
+  JwiaClass(String name, JwiaClass superclass , Map<String, JwiaFunction> methods) {
     this.name = name;
+    this.superclass = superclass;
     this.methods = methods;
   }
 
   JwiaFunction findMethod(String name) {
     if (methods.containsKey(name)) {
       return methods.get(name);
+    }
+
+   if (superclass != null) {
+      return superclass.findMethod(name);
     }
 
     return null;
